@@ -1,0 +1,259 @@
+<!-- 
+  This is a self-contained HTML file for a simple, responsive space debris tracker website.
+  It uses Tailwind CSS for styling and includes JavaScript to fetch and display data.
+  This version has a significantly expanded placeholder dataset.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Debris Tracker</title>
+    <!-- Use the Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Load Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19; /* A dark, space-like background */
+        }
+        /* Custom scrollbar for a better aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+
+    <!-- Header Section -->
+    <header class="bg-gray-900 shadow-lg py-4 px-6 md:px-12">
+        <nav class="flex items-center justify-between flex-wrap">
+            <div class="flex items-center flex-shrink-0 text-white mr-6">
+                <span class="font-bold text-xl tracking-tight">Space Debris</span>
+            </div>
+            <div class="text-sm">
+                <a href="#data-container" class="block mt-4 md:inline-block md:mt-0 text-gray-300 hover:text-white mr-4 transition-colors">
+                    View Debris
+                </a>
+                <a href="#" class="block mt-4 md:inline-block md:mt-0 text-gray-300 hover:text-white transition-colors">
+                    About
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Section -->
+    <main class="container mx-auto px-4 py-8 md:py-16">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight">Tracking the Junk in Our Orbit</h1>
+            <p class="text-xl md:text-2xl font-light text-gray-400 max-w-3xl mx-auto">
+                Explore the vast catalog of man-made objects orbiting Earth, including retired satellites and mission-related debris.
+            </p>
+            <button id="fetch-button" class="mt-8 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-full shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+                Load Debris Data
+            </button>
+        </div>
+
+        <!-- Data Display Section -->
+        <section id="data-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Data will be dynamically inserted here by JavaScript -->
+            <div id="loading-spinner" class="col-span-full hidden text-center">
+                <svg class="animate-spin h-10 w-10 text-indigo-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-4 text-gray-400">Fetching data...</p>
+            </div>
+            
+            <div id="error-message" class="col-span-full hidden bg-red-800 p-4 rounded-lg text-center">
+                <p class="font-semibold">Error:</p>
+                <p id="error-text"></p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-900 py-6 mt-12 text-center text-gray-500 text-sm">
+        <p>&copy; 2025 Space Debris Tracker. Data provided by an external API.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dataContainer = document.getElementById('data-container');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const errorMessage = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            const fetchButton = document.getElementById('fetch-button');
+
+            // IMPORTANT: Replace this with your actual API URL.
+            const API_URL = 'https://api.example.com/space-debris-data';
+
+            // Placeholder data structure to show how the code would work.
+            const placeholderData = [
+                // Collisions and Anti-Satellite Tests
+                { name: "Iridium 33 Debris #1", id: "33887", country: "USA", launchDate: "1997-09-14", objectType: "Fragment", mass: "0.2 kg", altitude: "780 km" },
+                { name: "Iridium 33 Debris #2", id: "33888", country: "USA", launchDate: "1997-09-14", objectType: "Fragment", mass: "0.3 kg", altitude: "781 km" },
+                { name: "Kosmos-2251 Debris #1", id: "33682", country: "Russia", launchDate: "1993-06-17", objectType: "Fragment", mass: "0.5 kg", altitude: "790 km" },
+                { name: "Kosmos-2251 Debris #2", id: "33683", country: "Russia", launchDate: "1993-06-17", objectType: "Fragment", mass: "0.4 kg", altitude: "791 km" },
+                { name: "Kosmos-2251 Debris #3", id: "33684", country: "Russia", launchDate: "1993-06-17", objectType: "Fragment", mass: "1.1 kg", altitude: "789 km" },
+                { name: "Fengyun-1C Debris #1", id: "29431", country: "China", launchDate: "1999-05-10", objectType: "Fragment", mass: "3.4 kg", altitude: "860 km" },
+                { name: "Fengyun-1C Debris #2", id: "29432", country: "China", launchDate: "1999-05-10", objectType: "Fragment", mass: "1.8 kg", altitude: "862 km" },
+                { name: "Fengyun-1C Debris #3", id: "29433", country: "China", launchDate: "1999-05-10", objectType: "Fragment", mass: "0.9 kg", altitude: "859 km" },
+                { name: "Cosmos 1408 Debris #1", id: "50831", country: "Russia", launchDate: "1982-09-16", objectType: "Fragment", mass: "0.8 kg", altitude: "480 km" },
+                { name: "Cosmos 1408 Debris #2", id: "50832", country: "Russia", launchDate: "1982-09-16", objectType: "Fragment", mass: "1.5 kg", altitude: "481 km" },
+
+                // Rocket Bodies and Upper Stages
+                { name: "Long March 3B Rocket Body", id: "46377", country: "China", launchDate: "2020-12-22", objectType: "Rocket Body", mass: "3,500 kg", altitude: "250 km" },
+                { name: "Ariane 5 Rocket Body", id: "24823", country: "ESA", launchDate: "1997-06-04", objectType: "Rocket Body", mass: "1,200 kg", altitude: "680 km" },
+                { name: "Pegasus Rocket Body", id: "22019", country: "USA", launchDate: "1992-06-25", objectType: "Rocket Body", mass: "1,800 kg", altitude: "480 km" },
+                { name: "Falcon 9 R/B", id: "47926", country: "USA", launchDate: "2021-01-24", objectType: "Rocket Body", mass: "4,000 kg", altitude: "550 km" },
+                { name: "Soyuz-2.1b R/B", id: "44719", country: "Russia", launchDate: "2019-12-18", objectType: "Rocket Body", mass: "2,800 kg", altitude: "600 km" },
+
+                // Non-operational Payloads
+                { name: "Envisat Satellite", id: "27386", country: "ESA", launchDate: "2002-03-01", objectType: "Payload (non-operational)", mass: "8,200 kg", altitude: "785 km" },
+                { name: "Vanguard 1", id: "00005", country: "USA", launchDate: "1958-03-17", objectType: "Payload (non-operational)", mass: "1.4 kg", altitude: "650 km" },
+                { name: "NOAA 16 Satellite", id: "27271", country: "USA", launchDate: "2000-09-21", objectType: "Payload (non-operational)", mass: "1,142 kg", altitude: "850 km" },
+                { name: "DMSP F13 Satellite", id: "24963", country: "USA", launchDate: "1995-03-24", objectType: "Payload (non-operational)", mass: "1,000 kg", altitude: "830 km" },
+                { name: "GOES 8 Satellite", id: "23547", country: "USA", launchDate: "1994-04-13", objectType: "Payload (non-operational)", mass: "1,070 kg", altitude: "35,786 km" },
+
+                // Mission-related Debris and Other Fragments
+                { name: "Hayabusa Debris #1", id: "27757", country: "Japan", launchDate: "2003-05-09", objectType: "Payload-related", mass: "0.2 kg", altitude: "630 km" },
+                { name: "Sentinel-1A Debris", id: "39626", country: "ESA", launchDate: "2014-04-03", objectType: "Fragment", mass: "0.1 kg", altitude: "700 km" },
+                { name: "Soyuz Fragment #1", id: "24208", country: "Russia", launchDate: "1996-02-17", objectType: "Fragment", mass: "1.5 kg", altitude: "710 km" },
+                { name: "Long March Fragment #1", id: "56789", country: "China", launchDate: "2021-04-29", objectType: "Fragment", mass: "0.5 kg", altitude: "380 km" },
+                { name: "Small Fragment-1", id: "90001", country: "Unknown", launchDate: "2010-01-01", objectType: "Fragment", mass: "0.01 kg", altitude: "800 km" },
+                { name: "Small Fragment-2", id: "90002", country: "Unknown", launchDate: "2011-02-02", objectType: "Fragment", mass: "0.02 kg", altitude: "805 km" },
+                { name: "Small Fragment-3", id: "90003", country: "Unknown", launchDate: "2012-03-03", objectType: "Fragment", mass: "0.03 kg", altitude: "810 km" },
+                { name: "Small Fragment-4", id: "90004", country: "Unknown", launchDate: "2013-04-04", objectType: "Fragment", mass: "0.04 kg", altitude: "815 km" },
+                { name: "Small Fragment-5", id: "90005", country: "Unknown", launchDate: "2014-05-05", objectType: "Fragment", mass: "0.05 kg", altitude: "820 km" },
+                { name: "Small Fragment-6", id: "90006", country: "Unknown", launchDate: "2015-06-06", objectType: "Fragment", mass: "0.06 kg", altitude: "825 km" },
+                { name: "Small Fragment-7", id: "90007", country: "Unknown", launchDate: "2016-07-07", objectType: "Fragment", mass: "0.07 kg", altitude: "830 km" },
+                { name: "Small Fragment-8", id: "90008", country: "Unknown", launchDate: "2017-08-08", objectType: "Fragment", mass: "0.08 kg", altitude: "835 km" },
+                { name: "Small Fragment-9", id: "90009", country: "Unknown", launchDate: "2018-09-09", objectType: "Fragment", mass: "0.09 kg", altitude: "840 km" },
+                { name: "Small Fragment-10", id: "90010", country: "Unknown", launchDate: "2019-10-10", objectType: "Fragment", mass: "0.10 kg", altitude: "845 km" },
+                { name: "Large Fragment-1", id: "90011", country: "Unknown", launchDate: "2015-01-01", objectType: "Fragment", mass: "10 kg", altitude: "900 km" },
+                { name: "Large Fragment-2", id: "90012", country: "Unknown", launchDate: "2016-02-02", objectType: "Fragment", mass: "12 kg", altitude: "910 km" },
+                { name: "Large Fragment-3", id: "90013", country: "Unknown", launchDate: "2017-03-03", objectType: "Fragment", mass: "15 kg", altitude: "920 km" },
+                { name: "Large Fragment-4", id: "90014", country: "Unknown", launchDate: "2018-04-04", objectType: "Fragment", mass: "18 kg", altitude: "930 km" },
+                { name: "Large Fragment-5", id: "90015", country: "Unknown", launchDate: "2019-05-05", objectType: "Fragment", mass: "20 kg", altitude: "940 km" },
+                { name: "Solar Panel Fragment", id: "90016", country: "Unknown", launchDate: "2005-06-01", objectType: "Payload-related", mass: "5 kg", altitude: "750 km" },
+                { name: "Tool Bag", id: "90017", country: "USA", launchDate: "2008-11-18", objectType: "Mission-related", mass: "0.5 kg", altitude: "370 km" },
+                { name: "Lens Cap", id: "90018", country: "Russia", launchDate: "2013-05-01", objectType: "Mission-related", mass: "0.05 kg", altitude: "410 km" },
+                { name: "Debris from exploded stage", id: "90019", country: "China", launchDate: "2010-02-01", objectType: "Fragment", mass: "0.7 kg", altitude: "880 km" },
+                { name: "Debris from exploded stage", id: "90020", country: "China", launchDate: "2010-02-01", objectType: "Fragment", mass: "1.2 kg", altitude: "882 km" },
+                { name: "Debris from exploded stage", id: "90021", country: "China", launchDate: "2010-02-01", objectType: "Fragment", mass: "0.4 kg", altitude: "879 km" },
+                { name: "Debris from exploded stage", id: "90022", country: "China", launchDate: "2010-02-01", objectType: "Fragment", mass: "2.1 kg", altitude: "885 km" },
+                { name: "Titan Rocket Body", id: "10001", country: "USA", launchDate: "1964-12-10", objectType: "Rocket Body", mass: "8,000 kg", altitude: "1000 km" },
+                { name: "Delta Rocket Body", id: "10002", country: "USA", launchDate: "1973-05-14", objectType: "Rocket Body", mass: "3,500 kg", altitude: "1100 km" },
+                { name: "Proton-K R/B", id: "10003", country: "Russia", launchDate: "1976-06-03", objectType: "Rocket Body", mass: "5,000 kg", altitude: "1200 km" },
+                { name: "Soyuz R/B", id: "10004", country: "Russia", launchDate: "1980-03-12", objectType: "Rocket Body", mass: "2,500 kg", altitude: "1050 km" },
+                { name: "Ariane 4 R/B", id: "10005", country: "ESA", launchDate: "1988-06-15", objectType: "Rocket Body", mass: "2,000 kg", altitude: "1150 km" },
+                { name: "Cosmos 1301 Debris", id: "13426", country: "Russia", launchDate: "1981-08-25", objectType: "Fragment", mass: "0.9 kg", altitude: "890 km" },
+                { name: "Cosmos 1302 Debris", id: "13427", country: "Russia", launchDate: "1981-08-25", objectType: "Fragment", mass: "1.1 kg", altitude: "895 km" },
+                { name: "Cosmos 1303 Debris", id: "13428", country: "Russia", launchDate: "1981-08-25", objectType: "Fragment", mass: "0.6 kg", altitude: "888 km" }
+            ];
+
+            // Function to create a card for each debris object
+            function createDebrisCard(debris) {
+                const card = document.createElement('div');
+                card.className = "bg-gray-800 p-6 rounded-xl shadow-xl transition-transform transform hover:scale-105 border border-transparent hover:border-indigo-500";
+                card.innerHTML = `
+                    <h3 class="text-2xl font-bold text-indigo-400 mb-2">${debris.name}</h3>
+                    <p class="text-sm text-gray-400 mb-4">Object ID: ${debris.id}</p>
+                    <ul class="text-gray-300 space-y-2">
+                        <li class="flex items-center">
+                            <span class="mr-2 text-indigo-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13h2m-2 4h2m4-4h2m-4 4h2m-4 4h2m-6 0h2m-2-4h2m-2-4h2"></path>
+                                </svg>
+                            </span>
+                            <span class="font-semibold">Type:</span> ${debris.objectType}
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2 text-indigo-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                </svg>
+                            </span>
+                            <span class="font-semibold">Altitude:</span> ${debris.altitude}
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2 text-indigo-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </span>
+                            <span class="font-semibold">Mass:</span> ${debris.mass}
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2 text-indigo-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.5 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.5-3-9s1.343-9 3-9m-9 9h10"></path>
+                                </svg>
+                            </span>
+                            <span class="font-semibold">Origin:</span> ${debris.country}
+                        </li>
+                        <li class="flex items-center">
+                            <span class="mr-2 text-indigo-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </span>
+                            <span class="font-semibold">Launch Date:</span> ${debris.launchDate}
+                        </li>
+                    </ul>
+                `;
+                return card;
+            }
+
+            // Main function to fetch data and render the cards
+            async function fetchDebrisData() {
+                // Clear previous data, show spinner, and hide errors
+                dataContainer.innerHTML = '';
+                loadingSpinner.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+
+                try {
+                    // For a real app, you would use this fetch call
+                    // const response = await fetch(API_URL);
+                    // const data = await response.json();
+                    
+                    // For this example, we'll simulate an API call with a delay
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    const data = placeholderData;
+
+                    if (data && data.length > 0) {
+                        data.forEach(debris => {
+                            dataContainer.appendChild(createDebrisCard(debris));
+                        });
+                    } else {
+                        throw new Error('No data found or an empty response.');
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch space debris data:', error);
+                    errorText.textContent = `Could not load data. Check the API URL or your network connection. Details: ${error.message}`;
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                }
+            }
+            
+            // Add a click event listener to the button
+            fetchButton.addEventListener('click', fetchDebrisData);
+        });
+    </script>
+</body>
+</html>
